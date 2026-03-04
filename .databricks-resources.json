@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "resources": [
+    {
+      "type": "schema",
+      "name": "main.transportation",
+      "id": "main.transportation",
+      "created_at": "2026-03-04T01:52:40.095680+00:00",
+      "updated_at": "2026-03-04T01:52:40.095680+00:00"
+    },
+    {
+      "type": "volume",
+      "name": "jennypark_catalog.example_data.staging",
+      "id": "jennypark_catalog.example_data.staging",
+      "created_at": "2026-03-04T01:54:48.938498+00:00",
+      "updated_at": "2026-03-04T01:54:48.938498+00:00"
+    },
+    {
+      "type": "genie_space",
+      "name": "Transportation & Supply Chain Insights",
+      "id": "01f1176e639917cfb5ab44e928ece142",
+      "created_at": "2026-03-04T02:03:51.669128+00:00",
+      "updated_at": "2026-03-04T02:03:51.669128+00:00"
+    }
+  ]
+}
