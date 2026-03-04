@@ -54,7 +54,7 @@ def resolve_lakebase_instance_name(
     )
 
 
-DEFAULT_LAKEBASE_INSTANCE_NAME = "agent-csv-analyzer-lb"
+DEFAULT_LAKEBASE_INSTANCE_NAME = "agent-langgraph-memory-lb"
 
 
 def ensure_lakebase_instance(

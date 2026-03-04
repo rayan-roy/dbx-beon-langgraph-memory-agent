@@ -42,15 +42,23 @@ sp_workspace_client = WorkspaceClient()
 # Configuration
 ############################################
 LLM_ENDPOINT_NAME = "databricks-claude-sonnet-4-5"
-SYSTEM_PROMPT = """\
+GENIE_SPACE_ID = os.getenv("GENIE_SPACE_ID", "")
+
+_BASE_SYSTEM_PROMPT = """\
 You are a helpful data analysis assistant with access to multiple tools:
 
-1. **Genie Space** (Transportation & Supply Chain Insights) - Use this to answer natural language questions about freight shipments, customer shipping performance, and transportation lane analysis. It has data on freight costs, delivery times, on-time performance, carrier comparisons, and damage claims.
-2. **Code Interpreter** (system.ai.python_exec) - Use this to execute Python code for data analysis, calculations, and visualizations.
-3. **CSV Data Tools** - Users can upload CSV files to this chat session. Use `describe_uploaded_csvs` to see what files are available, and `search_uploaded_csv` to find relevant rows by semantic search.
+1. **Code Interpreter** (system.ai.python_exec) - Use this to execute Python code for data analysis, calculations, and visualizations.
+2. **CSV Data Tools** - Users can upload CSV files to this chat session. Use `describe_uploaded_csvs` to see what files are available, and `search_uploaded_csv` to find relevant rows by semantic search.
 
-When a user asks about transportation, shipments, freight costs, or supply chain data, use the Genie Space tool. When a user asks about uploaded CSV data, first use `describe_uploaded_csvs` to understand the available data, then use `search_uploaded_csv` to find relevant rows. You can also use the code interpreter to perform deeper analysis on the data.
+When a user asks about uploaded CSV data, first use `describe_uploaded_csvs` to understand the available data, then use `search_uploaded_csv` to find relevant rows. You can also use the code interpreter to perform deeper analysis on the data.
 """
+
+_GENIE_ADDENDUM = """
+You also have access to a **Genie Space** for natural language queries over structured data. Use the Genie tool when a user asks questions that can be answered from the connected dataset.
+"""
+
+SYSTEM_PROMPT = _BASE_SYSTEM_PROMPT + (_GENIE_ADDENDUM if GENIE_SPACE_ID else "")
+
 EMBEDDING_ENDPOINT = os.getenv("EMBEDDING_ENDPOINT", "databricks-gte-large-en")
 EMBEDDING_DIMS = int(os.getenv("EMBEDDING_DIMS", "1024"))
 
@@ -66,20 +74,22 @@ class StatefulAgentState(TypedDict, total=False):
 
 def init_mcp_client(workspace_client: WorkspaceClient) -> DatabricksMultiServerMCPClient:
     host_name = get_databricks_host_from_env()
-    return DatabricksMultiServerMCPClient(
-        [
+    servers = [
+        DatabricksMCPServer(
+            name="system-ai",
+            url=f"{host_name}/api/2.0/mcp/functions/system/ai",
+            workspace_client=workspace_client,
+        ),
+    ]
+    if GENIE_SPACE_ID:
+        servers.append(
             DatabricksMCPServer(
-                name="system-ai",
-                url=f"{host_name}/api/2.0/mcp/functions/system/ai",
+                name="genie",
+                url=f"{host_name}/api/2.0/mcp/genie/{GENIE_SPACE_ID}",
                 workspace_client=workspace_client,
-            ),
-            DatabricksMCPServer(
-                name="genie-transportation",
-                url=f"{host_name}/api/2.0/mcp/genie/01f1177020ad1ad2a26221d5d4933406",
-                workspace_client=workspace_client,
-            ),
-        ]
-    )
+            )
+        )
+    return DatabricksMultiServerMCPClient(servers)
 
 
 _cached_mcp_tools = None

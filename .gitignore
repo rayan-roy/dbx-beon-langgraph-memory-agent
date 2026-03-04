@@ -205,6 +205,10 @@ sketch
 **/.env
 **/.env.local
 
+# Generated data and workspace-specific files
+.databricks-resources.json
+sample_data/*.csv
+
 # Claude Code - track skills only
 .claude/*
 !.claude/skills/

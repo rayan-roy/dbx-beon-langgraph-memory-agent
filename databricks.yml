@@ -1,17 +1,7 @@
 bundle:
   name: agent_langgraph_short_term_memory
 
-  # Resources managed manually (CLI v0.216.0 has profile conflicts with Terraform)
-  # App name: agent-csv-analyzer
-  # Required app resources (add via UI):
-  #   - experiment: MLflow experiment (CAN_MANAGE) — auto-created at runtime
-  #   - database: Lakebase instance (CAN_CONNECT_AND_CREATE) — auto-created if not set
-  #   - genie_space: space_id '01f1177020ad1ad2a26221d5d4933406' (CAN_RUN) — Transportation & Supply Chain Insights
-
 targets:
   dev:
     mode: development
     default: true
-    workspace:
-      profile: azure-config
-      host: https://adb-984752964297111.11.azuredatabricks.net

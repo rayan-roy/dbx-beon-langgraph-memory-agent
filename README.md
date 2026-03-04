@@ -302,11 +302,7 @@ After it completes, open the MLflow UI link for your experiment to inspect resul
 
 For future updates to the agent, sync and redeploy your agent.
 
-## CSV Upload & Genie Space Features
-
-This agent includes additional capabilities beyond the base template:
-
-### CSV Upload
+## CSV Upload
 
 Users can upload CSV files directly from the chat UI using the paperclip button. Uploaded CSVs are stored in Lakebase with pgvector embeddings, scoped to the chat session. The agent can then search and answer questions about the uploaded data.
 
@@ -321,39 +317,18 @@ curl -X POST http://localhost:8000/upload-csv \
   -F "file=@data.csv" -F "thread_id=my-session-1"
 ```
 
-### Genie Space (Transportation & Supply Chain Insights)
+## Customization
 
-The agent is connected to a Genie space with synthetic transportation data for natural language queries about freight shipments, customer performance, and lane analysis.
+### Connecting a Genie Space (Optional)
 
-**Tables** (in `jennypark_catalog.example_data`):
-- `shipments` (2,000 rows) — Individual shipment records with freight cost, weight, transit times, carrier, origin/destination, on-time delivery, damage claims
-- `customer_summary` (15 rows) — Aggregated per-customer metrics (total spend, avg cost/lb, on-time %, etc.)
-- `lane_analysis` (130 rows) — Origin-destination lane performance (volume, cost, transit time, on-time %)
+To enable natural language queries over structured data, set the `GENIE_SPACE_ID` environment variable to your Genie space ID:
 
-**Sample questions:**
-- "What are the top 5 customers by total freight cost?"
-- "Which carrier has the best on-time delivery rate?"
-- "What is the average cost per pound by transport mode?"
-- "Which lanes have the most delays?"
+- In `.env` for local development: `GENIE_SPACE_ID=<your-space-id>`
+- In `app.yaml` for deployed apps: update the `GENIE_SPACE_ID` value
 
-To regenerate the synthetic data, run:
-```bash
-python sample_data/generate_transportation_data.py --rows 2000
-```
+When configured, the agent will automatically add the Genie MCP server and update its system prompt to mention the data source.
 
-### Required App Permissions
-
-When deploying to Databricks Apps, grant the app's service principal access to:
-
-| Resource | Permission | Details |
-|----------|-----------|---------|
-| Lakebase instance | CAN_CONNECT_AND_CREATE | Auto-created if not provided via `LAKEBASE_INSTANCE_NAME` |
-| Genie space | CAN_RUN | Space ID: `01f1177020ad1ad2a26221d5d4933406` |
-| SQL warehouse | CAN_USE | Warehouse ID: `148ccb90800933a1` |
-| Unity Catalog tables | SELECT | `jennypark_catalog.example_data.*` |
-| Code interpreter | CAN_QUERY | `system.ai.python_exec` (via MCP) |
-
-Grant these via the Databricks UI: navigate to your app → **Edit** → **App resources** → **Add resource**.
+When deploying to Databricks Apps, remember to grant the app's service principal `CAN_RUN` permission on the Genie space and `CAN_USE` on the associated SQL warehouse.
 
 ### FAQ
 

@@ -16,10 +16,10 @@ interface SuggestedActionsProps {
 function PureSuggestedActions({ chatId, sendMessage }: SuggestedActionsProps) {
   const { chatHistoryEnabled } = useAppConfig();
   const suggestedActions = [
-    'What are the top 5 customers by total freight cost?',
-    'Which carrier has the best on-time delivery rate?',
-    'What is the average cost per pound by transport mode?',
-    'Which lanes have the most delays?',
+    'What tools do you have access to?',
+    'Help me analyze a CSV file',
+    'Write a Python script to generate a chart',
+    'What can you help me with?',
   ];
 
   return (
