@@ -18,3 +18,10 @@ resources:
           experiment:
             experiment_id: '445677761488698'
             permission: 'CAN_MANAGE'
+            
+        # Lakebase instance for memory storage
+        - name: 'database'
+          database:
+            instance_name: 'agent-langgraph-memory-lb'
+            database_name: 'postgres'
+            permission: 'CAN_CONNECT_AND_CREATE'

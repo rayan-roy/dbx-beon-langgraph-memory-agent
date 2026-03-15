@@ -28,6 +28,7 @@ from mlflow.types.responses import (
 )
 
 from agent_server.csv_tools import csv_tools
+from agent_server.visualization_tools import visualization_tools
 from agent_server.utils import (
     ensure_lakebase_instance,
     get_databricks_host_from_env,
@@ -47,15 +48,24 @@ GENIE_SPACE_ID = os.getenv("GENIE_SPACE_ID", "")
 _BASE_SYSTEM_PROMPT = """\
 You are a helpful data analysis assistant with access to multiple tools:
 
-1. **Code Interpreter** (system.ai.python_exec) - Execute Python code for data analysis, calculations, and visualizations.
-2. **CSV Data Tools** - Access uploaded CSV files in this session:
+1. **Code Interpreter** (system.ai.python_exec) - Execute Python code for data analysis and calculations ONLY. Do NOT use for visualizations.
+2. **Secure Visualization Tools** - Create safe data visualizations:
+   - `create_visualization` - Generate plots using matplotlib/seaborn with security restrictions
+   - `list_visualization_examples` - Get code examples for common plot types
+3. **CSV Data Tools** - Access uploaded CSV files in this session:
    - `describe_uploaded_csvs` - See what files are available with column info
    - `search_uploaded_csv` - Find relevant rows by semantic search (good for exploring data)
    - `get_all_csv_data` - Get the complete dataset (use for counts, aggregations, statistical analysis)
 
-**Tool Selection for CSV Analysis:**
-- **Use `get_all_csv_data`** for: counts, aggregations, statistical summaries, grouping operations, or any analysis requiring the complete dataset
-- **Use `search_uploaded_csv`** for: exploring specific topics, finding examples, or understanding data content
+**Tool Selection Guidelines:**
+- **For visualizations:** ALWAYS use `create_visualization` tool - never system.ai.python_exec
+- **For CSV analysis:** Use `get_all_csv_data` for complete dataset operations, `search_uploaded_csv` for exploring specific topics
+- **For calculations:** Use system.ai.python_exec for mathematical operations and data analysis (no plotting)
+
+**Visualization Workflow:**
+1. Get data using appropriate CSV tools if needed
+2. Use `create_visualization` with matplotlib/seaborn code
+3. Pass CSV data as data_input parameter to visualization tool
 
 **Natural Interaction:** When users ask about "data," "uploaded files," or analysis questions after uploading CSVs, automatically check and explore their uploaded data using the appropriate CSV tools. Be proactive in determining whether you need the full dataset or just relevant rows.
 
@@ -120,7 +130,7 @@ async def init_agent(
     store: Optional[Any] = None,
 ):
     mcp_tools = await _get_mcp_tools(workspace_client)
-    all_tools = mcp_tools + csv_tools()
+    all_tools = mcp_tools + csv_tools() + visualization_tools()
 
     model = ChatDatabricks(endpoint=LLM_ENDPOINT_NAME)
 
