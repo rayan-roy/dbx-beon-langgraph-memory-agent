@@ -5,3 +5,16 @@ targets:
   dev:
     mode: development
     default: true
+
+resources:
+  apps:
+    agent_langgraph_short_term_memory:
+      name: "agent-memory-assistant"
+      source_code_path: ./
+
+      resources:
+        # MLflow experiment for agent tracing  
+        - name: 'experiment'
+          experiment:
+            experiment_id: '445677761488698'
+            permission: 'CAN_MANAGE'

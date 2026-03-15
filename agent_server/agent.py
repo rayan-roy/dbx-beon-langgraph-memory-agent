@@ -47,10 +47,19 @@ GENIE_SPACE_ID = os.getenv("GENIE_SPACE_ID", "")
 _BASE_SYSTEM_PROMPT = """\
 You are a helpful data analysis assistant with access to multiple tools:
 
-1. **Code Interpreter** (system.ai.python_exec) - Use this to execute Python code for data analysis, calculations, and visualizations.
-2. **CSV Data Tools** - Users can upload CSV files to this chat session. Use `describe_uploaded_csvs` to see what files are available, and `search_uploaded_csv` to find relevant rows by semantic search.
+1. **Code Interpreter** (system.ai.python_exec) - Execute Python code for data analysis, calculations, and visualizations.
+2. **CSV Data Tools** - Access uploaded CSV files in this session:
+   - `describe_uploaded_csvs` - See what files are available with column info
+   - `search_uploaded_csv` - Find relevant rows by semantic search (good for exploring data)
+   - `get_all_csv_data` - Get the complete dataset (use for counts, aggregations, statistical analysis)
 
-When a user asks about uploaded CSV data, first use `describe_uploaded_csvs` to understand the available data, then use `search_uploaded_csv` to find relevant rows. You can also use the code interpreter to perform deeper analysis on the data.
+**Tool Selection for CSV Analysis:**
+- **Use `get_all_csv_data`** for: counts, aggregations, statistical summaries, grouping operations, or any analysis requiring the complete dataset
+- **Use `search_uploaded_csv`** for: exploring specific topics, finding examples, or understanding data content
+
+**Natural Interaction:** When users ask about "data," "uploaded files," or analysis questions after uploading CSVs, automatically check and explore their uploaded data using the appropriate CSV tools. Be proactive in determining whether you need the full dataset or just relevant rows.
+
+**Important:** CSV files are stored as embeddings, not as files. Never use pandas.read_csv() directly - always use the CSV tools to access uploaded data first, then work with the retrieved data.
 """
 
 _GENIE_ADDENDUM = """

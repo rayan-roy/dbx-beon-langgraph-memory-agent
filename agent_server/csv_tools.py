@@ -100,4 +100,51 @@ def csv_tools():
 
         return f"Uploaded CSV files:\n" + "\n".join(descriptions)
 
-    return [search_uploaded_csv, describe_uploaded_csvs]
+    @tool
+    async def get_all_csv_data(config: RunnableConfig, filename: str = "") -> str:
+        """Get all rows from uploaded CSV data for comprehensive analysis.
+
+        Use this when you need the complete dataset for aggregations, counts, 
+        statistical analysis, or any operation requiring the full data. 
+        For large datasets, this returns all available data.
+
+        Args:
+            filename: Optional specific filename to retrieve. If empty, gets all data.
+        """
+        thread_id = config.get("configurable", {}).get("thread_id")
+        if not thread_id:
+            return "CSV data not available - no thread_id provided."
+
+        store: Optional[BaseStore] = config.get("configurable", {}).get("store")
+        if not store:
+            return "CSV data not available - store not configured."
+
+        namespace = (CSV_NAMESPACE_PREFIX, thread_id)
+        # Get all data by using a broad search with high limit
+        results = await store.asearch(namespace, query="", limit=1000)
+
+        # Filter out metadata entries
+        data_results = [r for r in results if not r.key.startswith(META_KEY_PREFIX)]
+
+        if not data_results:
+            return "No CSV data found. Please upload a CSV file first."
+
+        if filename:
+            # Filter by specific filename if requested
+            filtered_results = []
+            for item in data_results:
+                if filename.lower() in item.key.lower():
+                    filtered_results.append(item)
+            data_results = filtered_results
+
+        if not data_results:
+            return f"No data found for filename '{filename}'."
+
+        rows = []
+        for item in data_results:
+            text = item.value.get("text", "")
+            rows.append(text)
+
+        return f"Complete CSV dataset ({len(data_results)} rows):\n" + "\n".join(rows)
+
+    return [search_uploaded_csv, describe_uploaded_csvs, get_all_csv_data]

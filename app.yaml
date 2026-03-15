@@ -13,10 +13,10 @@ env:
   - name: CHAT_PROXY_TIMEOUT_SECONDS
     value: "300"
   - name: MLFLOW_EXPERIMENT_ID
-    value: ""
+    valueFrom: "experiment"
   # Leave empty to auto-create a Lakebase instance, or set to an existing instance name
   - name: LAKEBASE_INSTANCE_NAME
-    value: ""
+    value: "agent-langgraph-memory-lb"
   - name: EMBEDDING_ENDPOINT
     value: "databricks-gte-large-en"
   - name: EMBEDDING_DIMS
