@@ -10,33 +10,19 @@ function parseVisualizationContent(content: string): {
   displayContent: string;
   imageData?: string;
 } {
-  // Check if this is a visualization response
-  if (content.includes('✅ **Visualization Created Successfully')) {
-    // Look for base64 image data
-    const base64Pattern = /!\[Chart\]\(data:image\/png;base64,([A-Za-z0-9+/=]+)\)/;
-    const base64Match = content.match(base64Pattern);
+  // Enhanced regex to find base64 images - covers Chart, Visualization, etc.
+  const base64Pattern = /!\[(?:Chart|Visualization)\]\(data:image\/png;base64,([A-Za-z0-9+/=]+)\)/;
+  const base64Match = content.match(base64Pattern);
+  
+  if (base64Match && base64Match[1]) {
+    const imageData = base64Match[1];
+    const displayContent = content.replace(base64Pattern, '').trim();
     
-    if (base64Match && base64Match[1]) {
-      const imageData = base64Match[1];
-      const displayContent = content.replace(base64Pattern, '').trim();
-      
-      return {
-        isVisualization: true,
-        displayContent,
-        imageData
-      };
-    }
-    
-    // Check for URL-based images  
-    const urlPattern = /!\[Chart\]\(([^)]+)\)/;
-    const urlMatch = content.match(urlPattern);
-    
-    if (urlMatch) {
-      return {
-        isVisualization: true,
-        displayContent: content.replace(urlPattern, '').trim() + `\n\n**Chart URL:** ${urlMatch[1]}`
-      };
-    }
+    return {
+      isVisualization: true,
+      displayContent,
+      imageData
+    };
   }
   
   return {
