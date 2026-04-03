@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import React, { memo, useState } from 'react';
+import React, { memo, useState, useEffect } from 'react';
 import { AnimatedAssistantIcon } from './animation-assistant-icon';
 import { Response } from './elements/response';
 import { MessageContent } from './elements/message';
@@ -74,6 +74,11 @@ const PurePreviewMessage = ({
     addToolApprovalResponse,
     sendMessage,
   });
+
+  // Clean message text for display (remove AUTO_GENERATE_CHART triggers)
+  const cleanMessageText = (text: string) => {
+    return text.replace(/AUTO_GENERATE_CHART:\s*.+/gi, '').trim();
+  };
 
   const attachmentsFromMessage = message.parts.filter(
     (part) => part.type === 'file',
@@ -175,6 +180,24 @@ const PurePreviewMessage = ({
     }
   };
 
+  // Auto-generate chart detection
+  useEffect(() => {
+    if (message.role !== 'assistant') return;
+    
+    const textContent = message.parts
+      .filter((part) => part.type === 'text')
+      .map((part) => part.text)
+      .join('\n');
+    
+    // Check if message contains auto-generate trigger
+    const autoGenerateMatch = textContent.match(/AUTO_GENERATE_CHART:\s*(.+)/i);
+    
+    if (autoGenerateMatch && !chartData && !isPlotLoading) {
+      // Auto-generate chart when pattern is detected
+      generatePlot();
+    }
+  }, [message.parts, chartData, isPlotLoading, generatePlot]);
+
   return (
     <div
       data-testid={`message-${message.role}`}
@@ -259,7 +282,7 @@ const PurePreviewMessage = ({
                       }
                     >
                       <Response>
-                        {sanitizeText(joinMessagePartSegments(parts))}
+                        {sanitizeText(cleanMessageText(joinMessagePartSegments(parts)))}
                       </Response>
                     </MessageContent>
                   </div>
