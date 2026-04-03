@@ -4,7 +4,7 @@ import { Actions, Action } from './elements/actions';
 import { memo } from 'react';
 import { toast } from 'sonner';
 import type { ChatMessage } from '@chat-template/core';
-import { ChevronDown, ChevronUp, CopyIcon, PencilLineIcon } from 'lucide-react';
+import { ChevronDown, ChevronUp, CopyIcon, PencilLineIcon, BarChartIcon } from 'lucide-react';
 
 function PureMessageActions({
   message,
@@ -13,6 +13,8 @@ function PureMessageActions({
   errorCount = 0,
   showErrors = false,
   onToggleErrors,
+  onGeneratePlot,
+  isPlotLoading = false,
 }: {
   message: ChatMessage;
   isLoading: boolean;
@@ -20,6 +22,8 @@ function PureMessageActions({
   errorCount?: number;
   showErrors?: boolean;
   onToggleErrors?: () => void;
+  onGeneratePlot?: () => void;
+  isPlotLoading?: boolean;
 }) {
   const [_, copyToClipboard] = useCopyToClipboard();
 
@@ -71,6 +75,15 @@ function PureMessageActions({
           <CopyIcon />
         </Action>
       )}
+      {textFromParts && onGeneratePlot && (
+        <Action 
+          tooltip={isPlotLoading ? "Generating plot..." : "Generate plot"}
+          onClick={onGeneratePlot}
+          disabled={isPlotLoading}
+        >
+          <BarChartIcon className={isPlotLoading ? "animate-spin" : ""} />
+        </Action>
+      )}
       {errorCount > 0 && onToggleErrors && (
         <Action
           tooltip={showErrors ? 'Hide errors' : 'Show errors'}
@@ -95,6 +108,7 @@ export const MessageActions = memo(
     if (prevProps.isLoading !== nextProps.isLoading) return false;
     if (prevProps.errorCount !== nextProps.errorCount) return false;
     if (prevProps.showErrors !== nextProps.showErrors) return false;
+    if (prevProps.isPlotLoading !== nextProps.isPlotLoading) return false;
 
     return true;
   },

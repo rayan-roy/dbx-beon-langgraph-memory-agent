@@ -38,8 +38,11 @@ import { MessageOAuthError } from './message-oauth-error';
 import { isCredentialErrorMessage } from '@/lib/oauth-error-utils';
 import { Streamdown } from 'streamdown';
 import { useApproval } from '@/hooks/use-approval';
+import ChartRenderer from './ChartRenderer';
+import { toast } from 'sonner';
 
 const PurePreviewMessage = ({
+  chatId,
   message,
   allMessages,
   isLoading,
@@ -63,6 +66,8 @@ const PurePreviewMessage = ({
 }) => {
   const [mode, setMode] = useState<'view' | 'edit'>('view');
   const [showErrors, setShowErrors] = useState(false);
+  const [chartData, setChartData] = useState<any>(null);
+  const [isPlotLoading, setIsPlotLoading] = useState(false);
 
   // Hook for handling MCP approval requests
   const { submitApproval, isSubmitting, pendingApprovalId } = useApproval({
@@ -112,6 +117,63 @@ const PurePreviewMessage = ({
     // Only consider non-OAuth errors for this check
     return errorParts.length > 0 && nonErrorParts.length === 0;
   }, [message.parts, errorParts.length]);
+
+  // Generate plot function
+  const generatePlot = async () => {
+    if (message.role !== 'assistant' || !message.parts.length) return;
+    
+    setIsPlotLoading(true);
+    try {
+      // Get the text content from the message
+      const textContent = message.parts
+        .filter((part) => part.type === 'text')
+        .map((part) => part.text)
+        .join('\n')
+        .trim();
+
+      if (!textContent) {
+        toast.error('No text content to analyze for plotting');
+        return;
+      }
+
+      // Prepare conversation history (limit to avoid token limits)
+      const messageIndex = allMessages.findIndex(m => m.id === message.id);
+      const relevantMessages = allMessages.slice(Math.max(0, messageIndex - 3), messageIndex + 1);
+      
+      const history = relevantMessages.map(m => ({
+        role: m.role,
+        content: m.parts
+          .filter((part) => part.type === 'text')
+          .map((part) => part.text)
+          .join('\n')
+          .trim()
+          .substring(0, 1000) // Limit each message to 1000 chars
+      }));
+
+      const response = await fetch('/api/agent/plot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          content: textContent.substring(0, 2000), // Limit content to 2000 chars
+          history,
+          thread_id: chatId // Use actual chat ID for CSV data access
+        }),
+      });
+
+      const spec = await response.json();
+      setChartData(spec);
+      
+      if (spec.no_data) {
+        toast.info(spec.reason || 'No data available for visualization');
+      }
+    } catch (err) {
+      console.error('Plot generation error:', err);
+      toast.error('Failed to generate plot');
+      setChartData({ no_data: true, reason: 'Failed to generate plot' });
+    } finally {
+      setIsPlotLoading(false);
+    }
+  };
 
   return (
     <div
@@ -377,7 +439,13 @@ const PurePreviewMessage = ({
               errorCount={errorParts.length}
               showErrors={showErrors}
               onToggleErrors={() => setShowErrors(!showErrors)}
+              onGeneratePlot={message.role === 'assistant' ? generatePlot : undefined}
+              isPlotLoading={isPlotLoading}
             />
+          )}
+
+          {chartData && (
+            <ChartRenderer spec={chartData} />
           )}
 
           {errorParts.length > 0 && (hasOnlyErrors || showErrors) && (

@@ -1,5 +1,8 @@
 from dotenv import load_dotenv
 from fastapi import Form, HTTPException, UploadFile
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+from typing import List, Dict, Optional
 from mlflow.genai.agent_server import AgentServer, setup_mlflow_git_based_version_tracking
 
 # Load env vars from .env before importing the agent for proper auth
@@ -9,6 +12,12 @@ load_dotenv(dotenv_path=".env", override=True)
 import agent_server.agent  # noqa: E402
 
 from agent_server.csv_store import delete_csv_data, get_csv_metadata, ingest_csv  # noqa: E402
+
+
+class PlotRequest(BaseModel):
+    content: str
+    history: Optional[List[Dict]] = []
+    thread_id: Optional[str] = None
 
 agent_server = AgentServer("ResponsesAgent", enable_chat_proxy=True)
 
@@ -52,6 +61,27 @@ async def csv_metadata(thread_id: str):
     """Return metadata about uploaded CSVs in a thread."""
     metadata = await get_csv_metadata(thread_id)
     return {"thread_id": thread_id, "files": metadata}
+
+
+@app.post("/api/agent/plot")
+async def generate_plot(request: PlotRequest):
+    """Generate a chart specification from agent response content."""
+    try:
+        from agent_server.plot_agent import create_plot_spec
+        
+        spec = await create_plot_spec(
+            content=request.content, 
+            history=request.history, 
+            thread_id=request.thread_id
+        )
+        return JSONResponse(content=spec)
+    except Exception as e:
+        import logging
+        logging.error(f"Plot generation error: {e}", exc_info=True)
+        return JSONResponse(
+            content={"no_data": True, "reason": f"Error generating chart: {str(e)}"}, 
+            status_code=500
+        )
 
 
 def main():

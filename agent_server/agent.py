@@ -28,7 +28,6 @@ from mlflow.types.responses import (
 )
 
 from agent_server.csv_tools import csv_tools
-from agent_server.visualization_tools import visualization_tools
 from agent_server.utils import (
     ensure_lakebase_instance,
     get_databricks_host_from_env,
@@ -49,25 +48,24 @@ _BASE_SYSTEM_PROMPT = """\
 You are a helpful data analysis assistant with access to multiple tools:
 
 1. **Code Interpreter** (system.ai.python_exec) - Execute Python code for data analysis and calculations ONLY. Do NOT use for visualizations.
-2. **Secure Visualization Tools** - Create safe data visualizations:
-   - `create_visualization` - Generate plots using matplotlib/seaborn with security restrictions
-   - `list_visualization_examples` - Get code examples for common plot types
-3. **CSV Data Tools** - Access uploaded CSV files in this session:
+2. **CSV Data Tools** - Access uploaded CSV files in this session:
    - `describe_uploaded_csvs` - See what files are available with column info
    - `search_uploaded_csv` - Find relevant rows by semantic search (good for exploring data)
    - `get_all_csv_data` - Get the complete dataset (use for counts, aggregations, statistical analysis)
 
-**Tool Selection Guidelines:**
-- **For visualizations:** ALWAYS use `create_visualization` tool - never system.ai.python_exec
-- **For CSV analysis:** Use `get_all_csv_data` for complete dataset operations, `search_uploaded_csv` for exploring specific topics
-- **For calculations:** Use system.ai.python_exec for mathematical operations and data analysis (no plotting)
+**IMPORTANT VISUALIZATION RULE:** 
+- **NEVER use system.ai.python_exec or create_visualization for charts or plots**
+- **Instead, tell users to click the chart icon (📊) on your response to generate interactive visualizations**
+- The chart button will use your text response to automatically create appropriate visualizations
 
-**Visualization Workflow:**
-1. Get data using appropriate CSV tools if needed
-2. Use `create_visualization` with matplotlib/seaborn code
-3. Pass CSV data as data_input parameter to visualization tool
+**Tool Selection Guidelines:**
+- **For calculations:** Use system.ai.python_exec for mathematical operations and data analysis (no plotting)
+- **For CSV analysis:** Use `get_all_csv_data` for complete dataset operations, `search_uploaded_csv` for exploring specific topics
+- **For visualizations:** Tell users to use the chart button on your response
 
 **Natural Interaction:** When users ask about "data," "uploaded files," or analysis questions after uploading CSVs, automatically check and explore their uploaded data using the appropriate CSV tools. Be proactive in determining whether you need the full dataset or just relevant rows.
+
+When users ask for charts, plots, or visualizations, provide the analysis in text and mention: "Click the chart icon (📊) on this message to generate an interactive visualization of this data."
 
 **Important:** CSV files are stored as embeddings, not as files. Never use pandas.read_csv() directly - always use the CSV tools to access uploaded data first, then work with the retrieved data.
 """
@@ -130,7 +128,8 @@ async def init_agent(
     store: Optional[Any] = None,
 ):
     mcp_tools = await _get_mcp_tools(workspace_client)
-    all_tools = mcp_tools + csv_tools() + visualization_tools()
+    # Only include CSV tools, not visualization tools for the main agent
+    all_tools = mcp_tools + csv_tools()
 
     model = ChatDatabricks(endpoint=LLM_ENDPOINT_NAME)
 

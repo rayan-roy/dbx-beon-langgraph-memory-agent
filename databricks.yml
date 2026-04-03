@@ -16,7 +16,7 @@ resources:
         # MLflow experiment for agent tracing  
         - name: 'experiment'
           experiment:
-            experiment_id: '445677761488698'
+            experiment_id: '2211033810357765'
             permission: 'CAN_MANAGE'
             
         # Lakebase instance for memory storage
