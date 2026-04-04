@@ -302,7 +302,32 @@ After it completes, open the MLflow UI link for your experiment to inspect resul
 
 For future updates to the agent, sync and redeploy your agent.
 
-## CSV Upload
+## Enhanced Features
+
+### Plot Generation & Visualization
+
+The agent includes advanced data visualization capabilities with automatic chart generation:
+
+**Features:**
+- **Smart Chart Detection**: Automatically generates visualizations when data patterns are detected
+- **Multiple Chart Types**: Bar charts, line charts, scatter plots, pie charts, and more
+- **Advanced Customization**: 6 color themes, 4 chart sizes, interactive zoom, and filtering
+- **Export Options**: PNG download with high resolution
+- **Responsive Design**: Charts adapt to different screen sizes
+
+**API Endpoints:**
+- `POST /plot` — Generate interactive charts from data and specifications
+- Supports JSON plot specifications with Plotly/Recharts formatting
+
+**Auto-Generation Triggers:**
+- Detects `AUTO_GENERATE_CHART:` markers in responses
+- Automatically creates appropriate visualizations based on data context
+- Integrates seamlessly with CSV analysis and database queries
+
+**Chart Themes Available:**
+- Default, Vibrant, Pastel, Dark, Monochrome, Corporate
+
+### CSV Upload
 
 Users can upload CSV files directly from the chat UI using the paperclip button. Uploaded CSVs are stored in Lakebase with pgvector embeddings, scoped to the chat session. The agent can then search and answer questions about the uploaded data.
 
@@ -319,16 +344,36 @@ curl -X POST http://localhost:8000/upload-csv \
 
 ## Customization
 
-### Connecting a Genie Space (Optional)
+### Enhanced Database Integration
 
-To enable natural language queries over structured data, set the `GENIE_SPACE_ID` environment variable to your Genie space ID:
+**Connecting a Genie Space (Recommended)**
 
+To enable advanced natural language queries over structured data and automatic chart generation from database results:
+
+**Setup:**
 - In `.env` for local development: `GENIE_SPACE_ID=<your-space-id>`
 - In `app.yaml` for deployed apps: update the `GENIE_SPACE_ID` value
 
-When configured, the agent will automatically add the Genie MCP server and update its system prompt to mention the data source.
+**Features:**
+- **Natural Language SQL**: Ask questions in plain English about your data
+- **Automatic Visualization**: Database query results trigger smart chart generation
+- **Table Discovery**: List and explore available tables and schemas
+- **Data Analysis**: Get schema information, data samples, and statistical insights
 
-When deploying to Databricks Apps, remember to grant the app's service principal `CAN_RUN` permission on the Genie space and `CAN_USE` on the associated SQL warehouse.
+**Example Queries:**
+- "What tables are available in the database?"
+- "Show me the top 10 records from prod_bi.gold_brokerage.actions"
+- "Create a chart showing sales trends by month"
+- "Analyze customer demographics from the users table"
+
+**MCP Integration:**
+The agent uses Multi-Server MCP (Model Context Protocol) for robust database connectivity with automatic fallback mechanisms.
+
+**Deployment Requirements:**
+When deploying to Databricks Apps, grant the app's service principal:
+- `CAN_RUN` permission on the Genie space
+- `CAN_USE` permission on the associated SQL warehouse
+- Access to required schemas and tables
 
 ### FAQ
 

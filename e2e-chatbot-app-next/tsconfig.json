@@ -14,7 +14,6 @@
     "forceConsistentCasingInFileNames": true,
     "allowSyntheticDefaultImports": true,
     "isolatedDeclarations": false,
-    "baseUrl": ".",
     "paths": {
       "@chat-template/core": ["./packages/core/src/index.ts"],
       "@chat-template/utils": ["./packages/utils/src/index.ts"],
