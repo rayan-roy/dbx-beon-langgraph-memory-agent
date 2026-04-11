@@ -198,6 +198,14 @@ sketch
 
 # End of https://www.toptal.com/developers/gitignore/api/react
 
+# Custom exclusions for this project
+# PNG image files
+*.png
+
+# Backup and working copy markdown files
+writeup copy.md
+write.md
+
 **/uv.lock
 **/mlruns/
 **/.vite/
